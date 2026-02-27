@@ -1,46 +1,25 @@
-import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
-import Home from "../views/Home/Home.vue";
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
+import HomeView from '../views/HomeView.vue';
+import { NavLinks } from '@/config/sectionsConfig';
 
-const routes: Array<RouteRecordRaw> = [
-  {
-    path: "/",
-    name: "home",
-    component: Home,
-  },
-  {
-    path: "/about",
-    name: "about",
-    component: Home,
-  },
-  {
-    path: "/career",
-    name: "career",
-    component: Home,
-  },
-  {
-    path: "/portfolio",
-    name: "portfolio",
-    component: Home,
-  },
-  {
-    path: "/resume",
-    name: "resume",
-    component: Home,
-  },
-  // {
-  //   path: "/about",
-  //   name: "About",
-  //   // route level code-splitting
-  //   // this generates a separate chunk (about.[hash].js) for this route
-  //   // which is lazy-loaded when the route is visited.
-  //   component: () =>
-  //     import(/* webpackChunkName: "about" */ "../views/About.vue"),
-  // },
-];
+const navRoutes: RouteRecordRaw[] = NavLinks.map((link): RouteRecordRaw => ({
+  path: `/${link.id}`,
+  name: link.id,
+  component: HomeView,
+}));
 
 const router = createRouter({
-  history: createWebHashHistory(),
-  routes,
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes: [
+    // Paths all point to HomeView, but they have different expected routes and names that
+    // users should be able to link to
+    {
+      path: "/",
+      name: "home",
+      component: HomeView,
+    },
+    ...navRoutes,
+  ],
 });
 
 export default router;

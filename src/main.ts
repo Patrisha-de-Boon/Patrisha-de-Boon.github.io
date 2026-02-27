@@ -1,6 +1,25 @@
-import { createApp } from "vue";
-import App from "./App.vue";
-import { appear } from "./directives/Appear";
-import router from "./router";
+import './assets/css/main.css';
 
-createApp(App).use(router).directive("appear", appear).mount("#app");
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import PrimeVue from 'primevue/config';
+import Aura from '@primeuix/themes/aura';
+
+import App from './App.vue';
+import router from './router';
+
+const app = createApp(App);
+
+app.use(createPinia());
+app.use(router);
+app.use(PrimeVue, {
+  // Default theme configuration
+  theme: {
+    preset: Aura,
+    options: {
+      darkModeSelector: '.dark-mode',
+    }
+  }
+});
+
+app.mount('#app');
