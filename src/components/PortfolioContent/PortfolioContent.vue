@@ -4,7 +4,7 @@
       class="body"
       v-html="body"
     />
-    <div class="portfolio-items-container cut-corners">
+    <div class="portfolio-items-container">
       <div
         v-for="item in items"
         :key="item.id"
@@ -12,7 +12,7 @@
         :class="{ open: openItem === item.id }"
       >
         <div
-          class="item-header cut-corners"
+          class="item-header"
           @mousedown="toggleOpen($event, item.id)"
           @keydown="toggleOpen($event, item.id)"
         >
@@ -94,8 +94,7 @@ const toggleOpen = (event: MouseEvent | KeyboardEvent, itemId: string) => {
 }
 
 .portfolio-items-container {
-  @apply p-px;
-  --cut-corner-border: var(--color-gray-400);
+  @apply p-px cut-corners bg-gray-900 cut-corners-border-gray-400;
 }
 
 .external-link {
@@ -110,7 +109,7 @@ const toggleOpen = (event: MouseEvent | KeyboardEvent, itemId: string) => {
   @apply overflow-clip;
 
   .item-header {
-    @apply inline-flex items-center gap-1 w-full hover:bg-gray-700 px-4 py-2 border-t border-gray-400;
+    @apply inline-flex items-center gap-1 w-full bg-gray-900 hover:bg-gray-700 px-4 py-2 border-t border-gray-400 cut-corners;
   }
 
   .item-content {

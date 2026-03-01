@@ -2,6 +2,10 @@
 
 @theme static {
   --default-font-family: "Source Sans 3", sans-serif;
+
+  --default-cut-corner-size: 8px;
+  --default-cut-corner-border: transparent;
+  --default-cut-corner-border-width: 1px
 }
 
 body {
@@ -10,6 +14,10 @@ body {
 
 ul {
   @apply list-disc pl-5;
+}
+
+a {
+  @apply underline hover:text-gray-400;
 }
 
 @layer utilities {
@@ -32,7 +40,156 @@ ul {
   }
 }
 
-a {
-  @apply underline hover:text-gray-400;
+/* cut-corners class is based on the method described by Kevin Powell in https://www.youtube.com/watch?v=aW6qEAQSctY */
+@utility cut-corners {
+  /* top left */
+  --cc-tl-size: var(--default-cut-corner-size);
+  /* top right */
+  --cc-tr-size: var(--default-cut-corner-size);
+  /* bottom right */
+  --cc-br-size: var(--default-cut-corner-size);
+  /* bottom left */
+  --cc-bl-size: var(--default-cut-corner-size);
+
+  --cut-corner-border: var(--default-cut-corner-border);
+  --cut-corner-border-width: var(--default-cut-corner-border-width);
+
+  position: relative;
+  isolation: isolate;
+  z-index: 1;
+
+  /*
+    The element with cut-corners applied to it must have a background if there is a non-transparent border.
+    This line will try to auto apply the parent background if there is one, but if there is not then the
+    border colour will show through on the main background.
+  */
+  background: inherit;
+
+  /* custom border through --cut-corner-border */
+  border: none;
+  border-color: transparent;
+
+  &::before,
+  &::after {
+    position: absolute;
+    inset: 0;
+    content: '';
+  }
+
+  &::before {
+    background: var(--cut-corner-border);
+    z-index: -2;
+  }
+
+  &::after {
+    background: inherit;
+    z-index: -1;
+  }
+
+  /* Clip path comment labels are primary edge followed by side of edge */
+  clip-path: polygon(
+    /* top left */
+    var(--cc-tl-size) 0%,
+    /* top right */
+    calc(100% - var(--cc-tr-size)) 0%,
+    /* right top */
+    100% var(--cc-tr-size),
+    /* right bottom */
+    100% calc(100% - var(--cc-br-size)),
+    /* bottom right */
+    calc(100% - var(--cc-br-size)) 100%,
+    /* bottom left */
+    var(--cc-bl-size) 100%,
+    /* left bottom */
+    0% calc(100% - var(--cc-bl-size)),
+    /* left top */
+    0% var(--cc-tl-size)
+  );
+
+  &::after {
+    clip-path: polygon(
+      /* top left */
+      calc(var(--cc-tl-size) + var(--cut-corner-border-width) * 0.5)
+      var(--cut-corner-border-width),
+      /* top right */
+      calc(100% - var(--cut-corner-border-width) - (var(--cc-tr-size) + var(--cut-corner-border-width) * 0.5))
+      var(--cut-corner-border-width),
+      /* right top */
+      calc(100% - var(--cut-corner-border-width))
+      var(--cc-tr-size),
+      /* right bottom */
+      calc(100% - var(--cut-corner-border-width))
+      calc(100% - (var(--cc-br-size) + var(--cut-corner-border-width) * 0.5)),
+      /* bottom right */
+      calc(100% - var(--cut-corner-border-width) - (var(--cc-br-size) + var(--cut-corner-border-width) * 0.5))
+      calc(100% - var(--cut-corner-border-width)),
+      /* bottom left */
+      calc(var(--cc-bl-size) + var(--cut-corner-border-width) * 0.5)
+      calc(100% - var(--cut-corner-border-width)),
+      /* left bottom */
+      var(--cut-corner-border-width)
+      calc(100% - var(--cut-corner-border-width) - (var(--cc-bl-size) + var(--cut-corner-border-width) * 0.5)),
+      /* left top */
+      var(--cut-corner-border-width)
+      calc(var(--cc-tl-size) + var(--cut-corner-border-width) * 0.5)
+    );
+  }
 }
 
+/*
+  The following utitlity classes only modify the values used by cut-corners.
+  The cut-corners class will still need to be applied seperately.
+*/
+@utility cut-corners-* {
+  /* top left */
+  --cc-tl-size: calc(var(--spacing, 0.25rem) * --value(integer));
+  --cc-tl-size: --value([length]);
+  /* top right */
+  --cc-tr-size: calc(var(--spacing, 0.25rem) * --value(integer));
+  --cc-tr-size: --value([length]);
+  /* bottom right */
+  --cc-br-size: calc(var(--spacing, 0.25rem) * --value(integer));
+  --cc-br-size: --value([length]);
+  /* bottom left */
+  --cc-bl-size: calc(var(--spacing, 0.25rem) * --value(integer));
+  --cc-bl-size: --value([length]);
+}
+@utility cut-corners-b-* {
+  /* bottom right */
+  --cc-br-size: calc(var(--spacing, 0.25rem) * --value(integer));
+  --cc-br-size: --value([length]);
+  /* bottom left */
+  --cc-bl-size: calc(var(--spacing, 0.25rem) * --value(integer));
+  --cc-bl-size: --value([length]);
+}
+@utility cut-corners-t-* {
+  /* top right */
+  --cc-tr-size: calc(var(--spacing, 0.25rem) * --value(integer));
+  --cc-tr-size: --value([length]);
+  /* top left */
+  --cc-tl-size: calc(var(--spacing, 0.25rem) * --value(integer));
+  --cc-tl-size: --value([length]);
+}
+@utility cut-corners-l-* {
+  /* top left */
+  --cc-tl-size: calc(var(--spacing, 0.25rem) * --value(integer));
+  --cc-tl-size: --value([length]);
+  /* bottom left */
+  --cc-bl-size: calc(var(--spacing, 0.25rem) * --value(integer));
+  --cc-bl-size: --value([length]);
+}
+@utility cut-corners-r-* {
+  /* top right */
+  --cc-tr-size: calc(var(--spacing, 0.25rem) * --value(integer));
+  --cc-tr-size: --value([length]);
+  /* bottom right */
+  --cc-br-size: calc(var(--spacing, 0.25rem) * --value(integer));
+  --cc-br-size: --value([length]);
+}
+/* This handles border color and border width depending on the input value */
+@utility cut-corners-border-* {
+  --cut-corner-border: --value(--color-*);
+  --cut-corner-border: --value([color]);
+  --default-cut-corner-border-width: calc(var(--spacing, 0.25rem) * --value(integer));
+  --default-cut-corner-border-width: --value([length]);
+}

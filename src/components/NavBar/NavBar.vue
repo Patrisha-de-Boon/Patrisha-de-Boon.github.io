@@ -13,7 +13,7 @@
           :key="link.label"
           :id="`${link.id}-link`"
           :to="`/${link.id}`"
-          class="link cut-corners"
+          class="link"
           :class="{ focused: focusedSection === link.id }"
         >
           {{ link.label }}
@@ -55,14 +55,15 @@ defineExpose({
 }
 
 nav {
-  @apply flex gap-0;
+  @apply flex gap-4;
 }
 
 .link {
-  @apply flex items-center no-underline hover:text-white bg-transparent hover:bg-gray-700 px-3 py-1;
+  @apply flex items-center no-underline hover:text-white hover:bg-gray-700 px-3 py-1
+    cut-corners cut-corners-border-gray-700 hover:cut-corners-border-gray-600 bg-gray-900;
 
   &.focused {
-    @apply pointer-events-none bg-gray-800;
+    @apply pointer-events-none text-white bg-gray-900 cut-corners-border-white;
   }
 }
 

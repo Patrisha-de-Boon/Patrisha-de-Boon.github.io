@@ -3,7 +3,7 @@
     v-if="closedPosition"
     ref="sectionRef"
     :id="section"
-    class="section cut-corners"
+    class="section"
     :class="{
       open: isOpen,
       transitioning: isTransitioning
@@ -220,7 +220,7 @@ defineExpose({
 @reference "#main.css";
 
 .section {
-  @apply absolute top-1 left-1 z-2 text-white w-fit bg-gray-900/90;
+  @apply absolute top-1 left-1 z-2 text-white w-fit bg-gray-900/90 cut-corners;
 }
 
 .section-content {
