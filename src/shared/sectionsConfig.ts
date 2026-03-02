@@ -74,9 +74,9 @@ export const PortfolioContentConfig: PortfolioContentProps = {
 export const ResumeContentConfig: ResumeContentProps = {
   leadingText: `If you want specifics on my experience and career in software development, here's my resume!`,
   tldrHeader: `And here's a quick summary if that's what you're looking for`,
-  tldrText: `<div><strong>Years of experience</strong>: 5.5</div>`
+  tldrText: `<div><strong>Years of Experience</strong>: 5.5</div>`
     + `<div><strong>Programming Languages and Frameworks</strong>:<br/>`
-    + `<ul><li>JavaScript, TypeScript, Vue, Nuxt, VitePress, Angular, React, and Node.js</li><li>C#, ASP.Net, .Net Core, and Xamarin</li><li>CSS, PostCSS, and SCSS</li><li>SQL, PostgreSQL, MySQL, and SQLite</li><li>HTML and XML | Java | Kotlin | MatLab | Python and Flask | C and C++ | R and R Studio</li></ul></div>`
+    + `<ul><li>JavaScript, TypeScript, Vue, Nuxt, VitePress, Angular, React, and Node.js</li><li>C#, ASP.Net, .Net Core, and Xamarin</li><li>CSS, Tailwind CSS, PostCSS, and SCSS</li><li>SQL, PostgreSQL, MySQL, and SQLite</li><li>HTML and XML | Java | Kotlin | MatLab | Python and Flask | C and C++ | R and R Studio</li></ul></div>`
     + `<div><strong>Devops, Tools, and Platforms</strong>:<br/>`
     + `<ul><li>AWS, S3, DynamoDB, CloudFront, and Lambda</li><li>Azure DevOps, Boards, Pipelines, Repos, Monitor, Blob Storage, Data Lake, and Functions</li><li>CircleCI | Git and GitHub | Mapbox | QGIS</li></ul></div>`,
 };
