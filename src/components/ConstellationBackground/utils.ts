@@ -61,6 +61,24 @@ export const drawLine = (
   ctx.restore();
 };
 
+export const drawText = (
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  color = 'white',
+  size = 18,
+) => {
+  ctx.save();
+
+  ctx.fillStyle = color;
+  ctx.textBaseline = 'top';
+  ctx.font = `${size}px "Source Sans 3", sans-serif`;
+  ctx.fillText(text, x, y);
+
+  ctx.restore();
+};
+
 export const makeRadialGradient = (
   ctx: CanvasRenderingContext2D,
   x: number,

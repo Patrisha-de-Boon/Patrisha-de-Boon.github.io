@@ -41,7 +41,8 @@ defineProps<ResumeContentProps>();
 
 .open-resume {
   @apply flex items-center justify-center gap-1 no-underline p-2
-    bg-gray-800 hover:bg-gray-700 text-white cut-corners cut-corners-border-gray-700 hover:cut-corners-border-gray-600;
+    bg-gray-800 hover:bg-gray-700 text-white cut-corners
+    cut-corners-border-gray-700 hover:cut-corners-border-gray-600;
 }
 
 .resume-content {

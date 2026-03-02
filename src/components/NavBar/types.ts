@@ -1,4 +1,4 @@
-import type { Section } from "@/types/sharedTypes";
+import type { Section } from "@/shared/sharedTypes";
 
 export type NavLink = {
   id: Section;

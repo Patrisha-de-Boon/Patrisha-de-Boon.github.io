@@ -31,7 +31,7 @@ import { RouterLink } from 'vue-router';
 import type { NavLink } from './types';
 import { useTemplateRef } from 'vue';
 import { useElementSize } from '@vueuse/core';
-import type { Section } from '@/types/sharedTypes';
+import type { Section } from '@/shared/sharedTypes';
 import SettingsIcon from '../Icons/SettingsIcon.vue';
 
 defineProps<{

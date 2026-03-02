@@ -4,7 +4,7 @@ import { onBeforeUnmount, onMounted, ref, type Ref } from "vue";
 
 export type UseTimerArgs = {
   minTimeBetweenFrames: Ref<number>;
-  scheduledFunction: (t: number) => void;
+  scheduledFunction: (t: number, lastT: number | null) => void;
 };
 
 export type UseTimerReturn = {
@@ -21,10 +21,10 @@ export default function useTimer({
 
   const timerFunction = (t: number) => {
     if (isNil(lastAnimationTime.value) || t > lastAnimationTime.value + minTimeBetweenFrames.value) {
-      lastAnimationTime.value = t;
       if (scheduledFunction) {
-        scheduledFunction(t);
+        scheduledFunction(t, lastAnimationTime.value);
       }
+      lastAnimationTime.value = t;
     }
   };
 

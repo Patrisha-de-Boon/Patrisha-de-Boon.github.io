@@ -10,7 +10,7 @@ import type { NavLink } from "@/components/NavBar/types";
 import type { PortfolioContentProps } from "@/components/PortfolioContent/types";
 import type { ResumeContentProps } from "@/components/ResumeContent/types";
 
-export const AboutContentConfig = "I'm an intermediate software developer with a passion for data visualization and a love for finding elegent solutions to complex problems.<br/><br/>"
+export const AboutContentConfig = "I'm a software developer with a passion for data visualization and a love for finding elegant solutions to complex problems.<br/><br/>"
   + "I've been lucky enough to have spent much of my career working with non-profits and research organizations, creating tools that have the potential to help these groups improve the world we all live in. It's a very fulfilling way to spend a work day.<br/><br/>"
   + "We live in an increasingly interconnected world, and there are many opportunities to create a positive impact on the world around us. My goal for the upcoming year is to put more effort into finding these opportunities in my life. You may have noticed, but connection and impact have become a bit of a theme for this website.";
 
@@ -73,7 +73,7 @@ export const PortfolioContentConfig: PortfolioContentProps = {
 
 export const ResumeContentConfig: ResumeContentProps = {
   leadingText: `If you want specifics on my experience and career in software development, here's my resume!`,
-  tldrHeader: `And here's a quick summary if that's what you're looking for:`,
+  tldrHeader: `And here's a quick summary if that's what you're looking for`,
   tldrText: `<div><strong>Years of experience</strong>: 5.5</div>`
     + `<div><strong>Programming Languages and Frameworks</strong>:<br/>`
     + `<ul><li>JavaScript, TypeScript, Vue, Nuxt, VitePress, Angular, React, and Node.js</li><li>C#, ASP.Net, .Net Core, and Xamarin</li><li>CSS, PostCSS, and SCSS</li><li>SQL, PostgreSQL, MySQL, and SQLite</li><li>HTML and XML | Java | Kotlin | MatLab | Python and Flask | C and C++ | R and R Studio</li></ul></div>`
@@ -85,7 +85,6 @@ export const NavLinks: NavLink[] = [
   {
     id: 'about',
     label: 'About',
-    title: 'About Me',
   },
   {
     id: 'portfolio',
@@ -96,9 +95,15 @@ export const NavLinks: NavLink[] = [
     label: 'Resume',
   },
   // hide settings for now, it's still under constructions
-  // {
-  //   id: 'settings',
-  //   label: '',
-  //   title: 'Settings'
-  // }
+  {
+    id: 'settings',
+    label: '',
+    title: 'Settings'
+  }
 ] as const;
+
+export const FramesPerSecondInfo = `The maximum frames per second for the animated background. The actual frames per second may be lower depending on your system's current resource availability.`;
+
+export const MinTimeToCrossInfo = `The time it takes a star travelling at max speed to cross the screen. This allows the default setting to create similar feeling motion across many different screen sizes and resolutions.`;
+
+export const ConnectionDistanceInfo = `The maximum distance between connected stars as a percentage of the width or height of the screen, whichever is smallest. This allows the default setting to create similar feeling connection density across many different screen sizes and resolutions. Warning: Increasing this value can cause performance to degrade.`;

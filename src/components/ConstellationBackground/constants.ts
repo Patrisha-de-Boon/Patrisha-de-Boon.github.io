@@ -21,8 +21,3 @@ export const LINE_WIDTH = 1;
 export const MANUAL_LINE_WIDTH = 2;
 export const MOUSE_GRADIENT_START_RADIUS = 0;
 export const MOUSE_GRADIENT_END_RADIUS = 200;
-
-// This is a percentage of min(windowWidth, windowHeight). This avoid issues on mobile
-// and other small screens where the entire screen may be filled with overlapping lines
-// because the stars are generated too close together to fit on screen
-export const MAX_LINE_DISTANCE = 0.05;

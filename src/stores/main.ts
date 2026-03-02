@@ -1,16 +1,19 @@
 import { computed, ref, watch } from 'vue';
 import { defineStore } from 'pinia';
-import { Sections, type Section } from '@/types/sharedTypes';
+import { Sections, type Section } from '@/shared/sharedTypes';
 import { useRoute, useRouter } from 'vue-router';
+import { DEFAULT_CONNECTION_DISTANCE, DEFAULT_FRAMES_PER_SECOND, DEFAULT_MIN_TIME_TO_CROSS_SCREEN } from '@/shared/sharedUtils';
 
 export const useMainStore = defineStore('main', () => {
   const route = useRoute();
   const router = useRouter();
 
   const focusedSection = ref<Section | null>(null);
-  const maxFramesPerSecond = ref(30);
-  const speedLimit = ref(10); // pixels per second
-  const connectionDistance = ref(50); // pixels
+  const maxFramesPerSecond = ref(DEFAULT_FRAMES_PER_SECOND);
+  const minTimeToCrossScreen = ref(DEFAULT_MIN_TIME_TO_CROSS_SCREEN); // seconds
+
+  // This is a percentage of min(windowWidth, windowHeight).
+  const connectionDistance = ref(DEFAULT_CONNECTION_DISTANCE);
 
   const setFocusedSection = (newFocus: Section | null) => {
     focusedSection.value = newFocus;
@@ -20,8 +23,8 @@ export const useMainStore = defineStore('main', () => {
     maxFramesPerSecond.value = newFps;
   };
 
-  const setSpeedLimit = (newLimit: number) => {
-    speedLimit.value = newLimit;
+  const setMinTimeToCrossScreen = (newLimit: number) => {
+    minTimeToCrossScreen.value = newLimit;
   };
 
   const setConnectionDistance = (newDistance: number) => {
@@ -43,11 +46,11 @@ export const useMainStore = defineStore('main', () => {
   return {
     focusedSection: computed(() => focusedSection.value),
     maxFramesPerSecond: computed(() => maxFramesPerSecond.value),
-    speedLimit: computed(() => speedLimit.value),
+    minTimeToCrossScreen: computed(() => minTimeToCrossScreen.value),
     connectionDistance: computed(() => connectionDistance.value),
     setFocusedSection,
     setMaxFramesPerSecond,
-    setSpeedLimit,
+    setMinTimeToCrossScreen,
     setConnectionDistance,
   };
 });

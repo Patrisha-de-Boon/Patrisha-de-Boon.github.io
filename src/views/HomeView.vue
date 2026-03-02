@@ -6,9 +6,11 @@
   />
   <main class="dark-mode">
     <ConstellationBackground
-      :manual-stars="manualStars"
-      :manual-lines="manualLines"
+      :manual-sections="manualSections"
       :min-time-between-frames="minTimeBetweenFrames"
+      :max-x-speed="maxXSpeed"
+      :max-y-speed="maxYSpeed"
+      :connection-distance="connectionDistance"
     />
 
     <ContentSection
@@ -50,24 +52,26 @@ import PortfolioContent from '@/components/PortfolioContent/PortfolioContent.vue
 import type { Line } from '@/components/ConstellationBackground/types';
 import { useMainStore } from '@/stores/main';
 import { computed, onMounted, ref, useTemplateRef, watch } from 'vue';
-import { AboutContentConfig, PortfolioContentConfig, ResumeContentConfig } from '@/config/sectionsConfig';
+import { AboutContentConfig, PortfolioContentConfig, ResumeContentConfig } from '@/shared/sectionsConfig';
 import ContentSection from '@/components/ContentSection/ContentSection.vue';
 import { useWindowSize } from '@vueuse/core';
-import { Sections, type Bounds, type Position, type Section } from '@/types/sharedTypes';
+import { Sections, type Bounds, type Position, type PositionProps, type PositionRatioChange, type Section } from '@/shared/sharedTypes';
 import useTimer from '@/composables/useTimer';
 import { forceSimulation, forceX, forceY } from 'd3-force';
 import { bboxCollide } from 'd3-bboxCollide';
 import forceLimit from 'd3-force-limit';
 import NavBar from '@/components/NavBar/NavBar.vue';
-import { NavLinks } from '@/config/sectionsConfig';
+import { NavLinks } from '@/shared/sectionsConfig';
 import SettingsContentView from '@/views/SettingsContentView.vue';
 import ResumeContent from '@/components/ResumeContent/ResumeContent.vue';
-
-const FRAMES_PER_SECOND = 30;
+import { getRandomSpeed, moveWithSpeed, ratioPositionProps, updateWaitingPropsToRatio } from '@/shared/sharedUtils';
+import { debounce, filter, isEmpty, isNil, map } from 'lodash-es';
 
 const mainStore = useMainStore();
 
 const animationStarted = ref(false);
+const propsWaitingToRatio = ref<Partial<Record<PositionProps, PositionRatioChange>>>({});
+
 const navBarRef = useTemplateRef<InstanceType<typeof NavBar>>('navBarRef');
 const sectionRefs = useTemplateRef<InstanceType<typeof ContentSection>[]>('sectionRefs');
 const { width: windowWidth, height: windowHeight } = useWindowSize();
@@ -75,45 +79,31 @@ const navBarHeight = computed(() => navBarRef.value?.navBarHeight);
 
 const sectionPositions = ref(Sections.reduce(
   (acc, current) => {
-    acc[current] = { x: 0, y: 0 };
+    acc[current] = { x: 0, y: 0, xSpeed: 0, ySpeed: 0 };
     return acc;
   },
   {} as Record<Section, Position>)
 );
 
 const minTimeBetweenFrames = computed(() => {
-  if (FRAMES_PER_SECOND <= 0) {
+  if (mainStore.maxFramesPerSecond <= 0) {
     return 0;
   }
 
-  return (1 / FRAMES_PER_SECOND) * 1000;
+  return (1 / mainStore.maxFramesPerSecond) * 1000;
 });
 
-const focusedSection = computed(() => {
-  return mainStore.focusedSection;
-});
+const minTimeToCrossScreen = computed(() => mainStore.minTimeToCrossScreen);
+const connectionDistance = computed(() => mainStore.connectionDistance);
+const focusedSection = computed(() => mainStore.focusedSection);
 
-const manualStarGroups = computed(() => sectionRefs.value?.map(sectionRef => sectionRef.sectionStars) ?? []);
-const manualStars = computed(() => manualStarGroups.value.flat());
-const manualLines = computed(() => {
-  // connect the stars from each group of manual stars in order
-  return manualStarGroups.value.flatMap(groupedStars => {
-    const lines: Line[] = [];
-    groupedStars.forEach((star, i) => {
-      const nextStar = (i + 1) < groupedStars.length ? groupedStars[i + 1] : groupedStars[0];
-      if (nextStar) {
-        lines.push({ x1: star.x, x2: nextStar.x, y1: star.y, y2: nextStar.y });
-      }
-    });
-    return lines;
-  });
-});
+const manualSections = computed(() => sectionRefs.value?.map(sectionRef => sectionRef.manualSection) ?? []);
 
 const getSectionSize = (section: Section) => {
   return sectionRefs.value?.find(sectionRef => sectionRef.section === section)?.closedSize ?? null;
 };
 
-type ForceNode = Bounds & { section: Section, xSpeed?: number, ySpeed?: number };
+type ForceNode = Bounds & { section: Section, xSpeed: number, ySpeed: number };
 
 const simulateCollisions = (
   positions: Record<Section, Position>,
@@ -173,15 +163,17 @@ const simulateCollisions = (
   return newPositions;
 };
 
+const maxXSpeed = computed(() => windowWidth.value / minTimeToCrossScreen.value);
+const maxYSpeed = computed(() => windowHeight.value / minTimeToCrossScreen.value);
+
 const setStartingPositions = () => {
   const newPositions = Sections.reduce(
   (acc, section) => {
-    const speedDivisor = 1000;
     const newPosition: Position = {
       x: Math.random() * windowWidth.value,
       y: (navBarHeight.value ?? 0) + Math.random() * (windowHeight.value - (navBarHeight.value ?? 0)),
-      xSpeed: (Math.random() - 0.5) / speedDivisor * windowWidth.value,
-      ySpeed: (Math.random() - 0.5) / speedDivisor * windowHeight.value,
+      xSpeed: getRandomSpeed(maxXSpeed.value),
+      ySpeed: getRandomSpeed(maxYSpeed.value),
     };
 
     acc[section] = newPosition;
@@ -192,7 +184,7 @@ const setStartingPositions = () => {
   animationStarted.value = true;
 };
 
-const moveSections = () => {
+const moveSections = (deltaT: number) => {
   const newPositions: Record<Section, Position> = {...sectionPositions.value };
   for(let i = 0; i < Sections.length; i++) {
     const section = Sections[i]!;
@@ -208,10 +200,10 @@ const moveSections = () => {
     }
 
     if (originalPosition.xSpeed) {
-      newPosition.x = originalPosition.x + originalPosition.xSpeed;
+      newPosition.x = moveWithSpeed(originalPosition.x, originalPosition.xSpeed, deltaT);
     }
     if (originalPosition.ySpeed) {
-      newPosition.y = originalPosition.y + originalPosition.ySpeed;
+      newPosition.y = moveWithSpeed(originalPosition.y, originalPosition.ySpeed, deltaT);
     }
 
     newPositions[section] = newPosition;
@@ -221,20 +213,31 @@ const moveSections = () => {
 
 const getSectionPosition = (section: Section) => {
   const position = sectionPositions.value[section];
-  // This was an attempt to fix jitter by rounding pixel values before applying them. This just makes the jitter worse.
-  // TODO: Fix jittery text. Current theory is that it might be a text rendering issue
-  // return {
-  //   x: Math.round(position.x),
-  //   y: Math.round(position.y),
-  // };
   return position;
 };
 
+const ratioStarProps = debounce(() => {
+  const propsToRatio = filter(propsWaitingToRatio.value, (p) => !!p);
+  propsWaitingToRatio.value = {};
+  const positions = map(sectionPositions.value, (p, section) => ({ ...p, section: section as Section }));
+
+  const newPositions = ratioPositionProps(propsToRatio, positions);
+  sectionPositions.value = newPositions.reduce((acc, position) => {
+    acc[position.section] = position;
+    return acc;
+  }, {} as Record<Section, Position>);
+}, 200);
+
 useTimer({
   minTimeBetweenFrames,
-  scheduledFunction: () => {
-    if (animationStarted.value) {
-      moveSections();
+  scheduledFunction: (t, lastT) => {
+    // wait for animation to start and don't animate while waiting for queue of prop changes,
+    // like when the user is resizing the window.
+    // If you animate while waiting for changes then the sections can be pushed by the boundary
+    // shrinking and end up grouped in a vertical line along the side of the window.
+    if (animationStarted.value && isEmpty(propsWaitingToRatio.value)) {
+      const deltaT = isNil(lastT) ? t : t - lastT;
+      moveSections(deltaT);
     }
   },
 });
@@ -242,8 +245,14 @@ useTimer({
 onMounted(() => {
   setStartingPositions();
 
-  watch([windowWidth, windowHeight], () => {
-    // TODO: reposition sections to keep them in the same relative position on screen
+  watch([windowWidth, windowHeight, maxXSpeed, maxYSpeed], (
+    newValues,
+    oldValues
+  ) => {
+    updateWaitingPropsToRatio(propsWaitingToRatio, newValues, oldValues);
+
+    // trigger the debounced function to update the waiting props when changes are done
+    ratioStarProps();
   });
 });
 </script>
@@ -256,6 +265,6 @@ main {
 }
 
 .section-content {
-  @apply p-6 overflow-y-auto;
+  @apply p-6;
 }
 </style>

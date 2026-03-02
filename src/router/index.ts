@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
-import { NavLinks } from '@/config/sectionsConfig';
+import { NavLinks } from '@/shared/sectionsConfig';
 
 const navRoutes: RouteRecordRaw[] = NavLinks.map((link): RouteRecordRaw => ({
   path: `/${link.id}`,

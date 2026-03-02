@@ -5,11 +5,12 @@
 
   --default-cut-corner-size: 8px;
   --default-cut-corner-border: transparent;
-  --default-cut-corner-border-width: 1px
+  --default-cut-corner-border-width: 1px;
 }
 
 body {
   @apply bg-gray-900 dark:scheme-dark;
+  --p-tooltip-max-width: 20rem;
 }
 
 ul {

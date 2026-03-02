@@ -7,6 +7,7 @@ import Aura from '@primeuix/themes/aura';
 
 import App from './App.vue';
 import router from './router';
+import Tooltip from 'primevue/tooltip';
 
 const app = createApp(App);
 
@@ -21,5 +22,6 @@ app.use(PrimeVue, {
     }
   }
 });
+app.directive('tooltip', Tooltip);
 
 app.mount('#app');

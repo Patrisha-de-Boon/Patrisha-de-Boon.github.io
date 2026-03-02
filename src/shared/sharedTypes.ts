@@ -4,8 +4,8 @@ export type Section = typeof Sections[number];
 export type Position = {
   x: number;
   y: number;
-  xSpeed?: number;
-  ySpeed?: number;
+  xSpeed: number;
+  ySpeed: number;
 };
 
 export type Bounds = {
@@ -15,4 +15,5 @@ export type Bounds = {
   height: number;
 };
 
-export const CUT_CORNER_OFFSET = 8;
+export type PositionProps = 'x' | 'y' | 'xSpeed' | 'ySpeed';
+export type PositionRatioChange = { prop: PositionProps, newValue: number, oldValue: number };

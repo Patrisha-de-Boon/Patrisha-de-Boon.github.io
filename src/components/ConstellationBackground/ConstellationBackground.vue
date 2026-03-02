@@ -4,26 +4,29 @@
     class="lines-canvas"
     :width="canvasWidth"
     :height="canvasHeight"
+    :style="canvasStyle"
   />
   <canvas
     ref="starsCanvasRef"
     class="stars-canvas"
     :width="canvasWidth"
     :height="canvasHeight"
+    :style="canvasStyle"
   />
   <canvas
     ref="manualCanvasRef"
     class="manual-canvas"
     :width="canvasWidth"
     :height="canvasHeight"
+    :style="canvasStyle"
   />
 </template>
 
 <script setup lang="ts">
 import { useMouse, useWindowSize } from '@vueuse/core';
 import { useTemplateRef, ref, watch, computed, onMounted, shallowRef } from 'vue';
-import { drawCircle, drawLine, getDistance, makeRadialGradient } from './utils';
-import { LINE_STROKE, MAX_LINE_DISTANCE, LINE_MOUSE_GRADIENT_END_COLOR,
+import { drawCircle, drawLine, drawText, getDistance, makeRadialGradient } from './utils';
+import { LINE_STROKE, LINE_MOUSE_GRADIENT_END_COLOR,
   MOUSE_GRADIENT_END_RADIUS, STAR_MOUSE_GRADIENT_END_COLOR, STAR_MOUSE_GRADIENT_START_COLOR,
   LINE_MOUSE_GRADIENT_START_COLOR, MOUSE_GRADIENT_START_RADIUS, STAR_FILL, STAR_RADIUS,
   MANUAL_STAR_RADIUS,
@@ -32,14 +35,19 @@ import { LINE_STROKE, MAX_LINE_DISTANCE, LINE_MOUSE_GRADIENT_END_COLOR,
   MANUAL_MOUSE_GRADIENT_END_COLOR,
   MANUAL_MOUSE_GRADIENT_START_COLOR
 } from './constants';
-import type { Line, Star } from './types';
+import type { Line, Star, ManualSection } from './types';
 import useTimer from '@/composables/useTimer';
+import { debounce, filter, isEmpty, isNil } from 'lodash-es';
+import { getRandomSpeed, moveWithSpeed, ratioPositionProps, updateWaitingPropsToRatio } from '@/shared/sharedUtils';
+import type { PositionRatioChange, PositionProps } from '@/shared/sharedTypes';
 
 const props = withDefaults(defineProps<{
-  manualStars: Star[];
-  manualLines: Line[];
+  manualSections: ManualSection[];
   numStars?: number;
-  minTimeBetweenFrames: number;
+  minTimeBetweenFrames: number; // milliseconds
+  maxXSpeed: number; // pixels per second
+  maxYSpeed: number; // pixels per second
+  connectionDistance: number; // percentage of screen size
 }>(), {
   numStars: 800,
 });
@@ -50,27 +58,30 @@ const manualCanvasRef = useTemplateRef('manualCanvasRef');
 const { width: windowWidth, height: windowHeight } = useWindowSize();
 const { x: mouseX, y: mouseY } = useMouse();
 
-const shouldDrawManualCanvas = ref(true);
+const propsWaitingToRatio = ref<Partial<Record<PositionProps, PositionRatioChange>>>({});
+const isWaitingForPropChanges = computed(() => !isEmpty(propsWaitingToRatio.value));
 
-const canvasWidth = computed(() => `${windowWidth.value}px`);
-const canvasHeight = computed(() => `${windowHeight.value}px`);
+const canvasWidth = ref<string>();
+const canvasHeight = ref<string>();
+// keep canvas style in sync with actual width and height so it doesn't stretch while resizing the window
+const canvasStyle = computed(() => ({
+  width: canvasWidth.value,
+  height: canvasHeight.value
+}));
 
 const stars = shallowRef<Star[]>([]);
+const lines = shallowRef<Line[]>([]);
 
 const maxLineDistance = computed(() => {
   const minSide = Math.min(windowWidth.value, windowHeight.value);
-  return minSide * MAX_LINE_DISTANCE;
+  return minSide * props.connectionDistance;
 });
 
 const generateStar = () => {
   const x = Math.random() * windowWidth.value;
   const y = Math.random() * windowHeight.value;
-  // Speed should be relative to the screen size so it takes the same amount of time
-  // for a star to move across the window on any screen size.
-  // Through experimentation this felt the best over the largest number of screens.
-  const speedDivisor = 2000;
-  const xSpeed = (Math.random() - 0.5) / speedDivisor * windowWidth.value;
-  const ySpeed = (Math.random() - 0.5) / speedDivisor * windowHeight.value;
+  const xSpeed = getRandomSpeed(props.maxXSpeed);
+  const ySpeed = getRandomSpeed(props.maxYSpeed);
   return {
     x,
     y,
@@ -79,24 +90,24 @@ const generateStar = () => {
   };
 };
 
-const moveStars = () => {
+const moveStars = (deltaT: number) => {
   const newStars: Star[] = [];
   for(let i = 0; i < stars.value.length; i++) {
     const star = stars.value[i]!;
 
-    let x = star.x + star.xSpeed;
-    let y = star.y + star.ySpeed;
+    let x = moveWithSpeed(star.x, star.xSpeed, deltaT);
+    let y = moveWithSpeed(star.y, star.ySpeed, deltaT);
     let xSpeed = star.xSpeed;
     let ySpeed = star.ySpeed;
 
     if (x < 0 || x > windowWidth.value) {
       xSpeed = -star.xSpeed;
-      x = star.x + xSpeed;
+      x = moveWithSpeed(star.x, star.xSpeed, deltaT);
     }
 
     if (y < 0 || y > windowHeight.value) {
       ySpeed = -star.ySpeed;
-      y = star.y + ySpeed;
+      y = moveWithSpeed(star.y, star.ySpeed, deltaT);
     }
 
     newStars.push({
@@ -109,12 +120,16 @@ const moveStars = () => {
   stars.value = newStars;
 };
 
-const lines = computed(() => {
+const computedLines = computed(() => {
+  if (isWaitingForPropChanges.value) {
+    // We don't use computedLines while waiting, so don't bother computing them
+    return [];
+  }
   const newLines: Line[] = [];
   const mouseStar: Star = { x: mouseX.value, y: mouseY.value, xSpeed: 0, ySpeed: 0 };
 
   // stars then mouseStar then manualStars
-  const allStars = stars.value.concat([mouseStar].concat(props.manualStars));
+  const allStars = stars.value.concat([mouseStar].concat(props.manualSections.flatMap(s => s.stars)));
 
   // We don't want to compare the manual stars with other manual stars, so don't include them
   // in the outer loop. Only iterate over stars and the mouseStar
@@ -138,6 +153,34 @@ const lines = computed(() => {
   }
   return newLines;
 });
+
+// It's much more performant to calculate lines asynchronously in a computed than to do it
+// synchronously within a requestAnimationFrame, but we don't want the lines updating
+// during window resize events because the connection distance changes immediately but the
+// star positions don't change until the window size is set for more than 200 ms. If we
+// let lines change while these values are out of sync we may get issues like many more
+// lines that appear between stars when a small window is changed to a large window, and
+// then disapear again 200 ms later
+watch([computedLines, isWaitingForPropChanges], () => {
+  if (!isWaitingForPropChanges.value) {
+    lines.value = computedLines.value;
+  }
+});
+
+// Similarily, we don't want to change canvasWidth or canvasHeight while waiting for resize
+// and related events. Resizing a canvas width or height causes the canvas to clear. If this
+// happens during resize events it can make the canvas flicker because the clear is out of
+// sync with the next scheduled animation frame
+watch([windowWidth, isWaitingForPropChanges], () => {
+  if (!isWaitingForPropChanges.value) {
+    canvasWidth.value = `${windowWidth.value}px`;
+  }
+}, { immediate: true });
+watch([windowHeight, isWaitingForPropChanges], () => {
+  if (!isWaitingForPropChanges.value) {
+    canvasHeight.value = `${windowHeight.value}px`;
+  }
+}, { immediate: true});
 
 const drawCommonCanvas = (
   canvas: HTMLCanvasElement | null,
@@ -210,11 +253,16 @@ const drawManualCanvas = () => {
   return drawCommonCanvas(
     manualCanvasRef.value,
     (ctx) => {
-      props.manualStars.forEach(star => {
-        drawCircle(ctx, star.x, star.y, MANUAL_STAR_RADIUS, STAR_FILL);
-      });
-      props.manualLines.forEach(line => {
-        drawLine(ctx, line.x1, line.x2, line.y1, line.y2, LINE_STROKE, MANUAL_LINE_WIDTH);
+      props.manualSections.forEach(section => {
+        section.stars.forEach(star => {
+          drawCircle(ctx, star.x, star.y, MANUAL_STAR_RADIUS, STAR_FILL);
+        });
+        section.lines.forEach(line => {
+          drawLine(ctx, line.x1, line.x2, line.y1, line.y2, LINE_STROKE, MANUAL_LINE_WIDTH);
+        });
+        section.text.forEach(text => {
+          drawText(ctx, text.text, text.x, text.y);
+        });
       });
     },
     MANUAL_MOUSE_GRADIENT_START_COLOR,
@@ -224,8 +272,11 @@ const drawManualCanvas = () => {
 
 useTimer({
   minTimeBetweenFrames: computed(() => props.minTimeBetweenFrames),
-  scheduledFunction: () => {
-    moveStars();
+  scheduledFunction: (t, lastT) => {
+    if (!isWaitingForPropChanges.value) {
+      const deltaT = isNil(lastT) ? t : t - lastT;
+      moveStars(deltaT);
+    }
 
     requestAnimationFrame(() => {
       drawStarsCanvas();
@@ -235,11 +286,19 @@ useTimer({
   },
 });
 
-onMounted(() => {
-  watch([() => props.manualLines, () => props.manualStars], () => {
-    shouldDrawManualCanvas.value = true;
-  }, { immediate: true });
+// propsWaitingToRatio will often have many props added from changes around the same time,
+// so debounce to do a single loop through stars per group of similarily timed changes.
+// This also avoid the issue of the canvas flickering from many frequent small updates as a
+// user changes the size of the window. This waits for the user to be done with a size change
+// before triggering the udpates
+const ratioStarProps = debounce(() => {
+  const propsToRatio = filter(propsWaitingToRatio.value, (p) => !!p);
+  propsWaitingToRatio.value = {};
 
+  stars.value = ratioPositionProps(propsToRatio, stars.value);
+}, 200);
+
+onMounted(() => {
   watch(() => props.numStars, (newNum, oldNum) => {
     const newStars: Star[] = [...stars.value];
     if (!oldNum || newNum > oldNum) {
@@ -252,33 +311,14 @@ onMounted(() => {
     stars.value = newStars;
   }, { immediate: true });
 
-  watch([windowWidth, windowHeight], ([newWidth, newHeight], [oldWidth, oldHeight]) => {
-    if (!oldWidth || !oldHeight || !newWidth || !newHeight) {
-      return;
-    }
+  watch([windowWidth, windowHeight, () => props.maxXSpeed, () => props.maxYSpeed], (
+    newValues,
+    oldValues
+  ) => {
+    updateWaitingPropsToRatio(propsWaitingToRatio, newValues, oldValues);
 
-    const newStars: Star[] = [];
-
-    const widthRatio = newWidth / oldWidth;
-    const heightRatio = newHeight / oldHeight;
-    stars.value.forEach((star) => {
-      const newStar = {
-        ...star
-      };
-
-      if (newWidth !== oldWidth) {
-        newStar.x = star.x * widthRatio;
-        newStar.xSpeed = star.xSpeed * widthRatio;
-      }
-
-      if (newHeight !== oldHeight) {
-        newStar.y = star.y * heightRatio;
-        newStar.ySpeed = star.ySpeed * heightRatio;
-      }
-
-      newStars.push(newStar);
-    });
-    stars.value = newStars;
+    // trigger the debounced function to update the waiting props when changes are done
+    ratioStarProps();
   });
 });
 </script>
