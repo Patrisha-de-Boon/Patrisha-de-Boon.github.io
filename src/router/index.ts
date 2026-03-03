@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
+import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import { NavLinks } from '@/shared/sectionsConfig';
 
@@ -9,7 +9,7 @@ const navRoutes: RouteRecordRaw[] = NavLinks.map((link): RouteRecordRaw => ({
 }));
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHashHistory(import.meta.env.BASE_URL),
   routes: [
     // Paths all point to HomeView, but they have different expected routes and names that
     // users should be able to link to
