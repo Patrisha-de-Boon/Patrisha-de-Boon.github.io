@@ -7,7 +7,12 @@
       {{ label }}
       <InfoIcon
         v-if="info"
-        v-tooltip.bottom="info"
+        :tooltip="info"
+      />
+      <WarningIcon
+        v-if="warning"
+        :tooltip="warning"
+        class="text-amber-400"
       />
     </div>
     <div class="inputs">
@@ -34,18 +39,21 @@
 import PrimeSlider from "primevue/slider";
 import PrimeInputNumber, { type InputNumberProps } from "primevue/inputnumber";
 import InfoIcon from "../Icons/InfoIcon.vue";
+import WarningIcon from "../Icons/WarningIcon.vue";
 
 withDefaults(defineProps<{
   min: number,
   max: number,
   label?: string,
   info?: string,
+  warning?: string,
   prefix?: string,
   suffix?: string,
   inputPt?: InputNumberProps['pt'],
 }>(), {
   label: undefined,
-  info:undefined,
+  info: undefined,
+  warning: undefined,
   prefix: undefined,
   suffix: undefined,
   inputPt: () => ({

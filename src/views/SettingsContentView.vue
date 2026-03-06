@@ -20,6 +20,7 @@
       v-model="connectionDistance"
       label="Connection Distance"
       :info="ConnectionDistanceInfo"
+      :warning="ConnectionDistanceWarning"
       :min="MIN_CONNECTION_DISTANCE"
       :max="MAX_CONNECTION_DISTANCE"
       suffix="%"
@@ -38,7 +39,7 @@ import { useMainStore } from '@/stores/main';
 import { computed } from 'vue';
 import SliderInput from '@/components/SliderInput/SliderInput.vue';
 import { DEFAULT_CONNECTION_DISTANCE, DEFAULT_FRAMES_PER_SECOND, DEFAULT_MIN_TIME_TO_CROSS_SCREEN } from '@/shared/sharedUtils';
-import { FramesPerSecondInfo, MinTimeToCrossInfo, ConnectionDistanceInfo } from '@/shared/sectionsConfig';
+import { FramesPerSecondInfo, MinTimeToCrossInfo, ConnectionDistanceInfo, ConnectionDistanceWarning } from '@/shared/sectionsConfig';
 
 const MIN_FRAMES_PER_SECOND = 0;
 const MAX_FRAMES_PER_SECOND = 60;

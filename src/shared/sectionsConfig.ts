@@ -106,4 +106,6 @@ export const FramesPerSecondInfo = `The maximum frames per second for the animat
 
 export const MinTimeToCrossInfo = `The time it takes a star travelling at max speed to cross the screen. This allows the default setting to create similar feeling motion across many different screen sizes and resolutions.`;
 
-export const ConnectionDistanceInfo = `The maximum distance between connected stars as a percentage of the width or height of the screen, whichever is smallest. This allows the default setting to create similar feeling connection density across many different screen sizes and resolutions. Warning: Increasing this value can cause performance to degrade.`;
+export const ConnectionDistanceInfo = `The maximum distance between connected stars as a percentage of the width or height of the screen, whichever is smallest. This allows the default setting to create similar feeling connection density across many different screen sizes and resolutions.`;
+
+export const ConnectionDistanceWarning = `Warning: Increasing this value can cause performance to degrade.`;
