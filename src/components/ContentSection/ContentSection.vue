@@ -36,7 +36,7 @@
 <script setup lang="ts">
 import { type ManualSection, type Line, type Star } from '@/components/ConstellationBackground/types';
 import { onClickOutside, useElementBounding, useElementSize, useWindowSize } from '@vueuse/core';
-import { computed, ref, useTemplateRef, watch } from 'vue';
+import { computed, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { select } from 'd3-selection';
 import 'd3-transition';
 import { type Bounds, type Position, type Section } from '@/shared/sharedTypes';
@@ -214,30 +214,32 @@ onClickOutside(sectionRef, () => {
   }
 },{ ignore: [ '.ignored-by-on-click-outside' ] });
 
-watch(openPosition, () => {
-  // Reposition the open section when open position changes (usually after a window resize)
-  if (props.focusedSection === props.section) {
-    transitionBounds(openPosition.value, 0);
-  }
-});
+onMounted(() => {
+  watch(openPosition, () => {
+    // Reposition the open section when open position changes (usually after a window resize)
+    if (props.focusedSection === props.section) {
+      transitionBounds(openPosition.value, 0);
+    }
+  });
 
-watch(() => props.focusedSection, () => {
-  if (props.focusedSection === props.section && !isOpen.value) {
-    openSection();
-  } else if (props.focusedSection !== props.section && isOpen.value) {
-    closeSection();
-  }
-});
+  watch(() => props.focusedSection, () => {
+    if (props.focusedSection === props.section && !isOpen.value) {
+      openSection();
+    } else if (props.focusedSection !== props.section && isOpen.value) {
+      closeSection();
+    }
+  }, { immediate: true });
 
-watch(closedBounds, (newPosition, oldPosition) => {
-  if (
-    !isTransitioning.value
-    && props.focusedSection !== props.section
-    && !isEqual(newPosition, oldPosition)
-    && closedBounds.value
-  ) {
-    transitionBounds(closedBounds.value, 100);
-  }
+  watch(closedBounds, (newPosition, oldPosition) => {
+    if (
+      !isTransitioning.value
+      && props.focusedSection !== props.section
+      && !isEqual(newPosition, oldPosition)
+      && closedBounds.value
+    ) {
+      transitionBounds(closedBounds.value, 100);
+    }
+  });
 });
 
 defineExpose({
