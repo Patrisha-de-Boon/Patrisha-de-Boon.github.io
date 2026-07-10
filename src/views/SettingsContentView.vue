@@ -41,7 +41,7 @@ import SliderInput from '@/components/SliderInput/SliderInput.vue';
 import { DEFAULT_CONNECTION_DISTANCE, DEFAULT_FRAMES_PER_SECOND, DEFAULT_MIN_TIME_TO_CROSS_SCREEN } from '@/shared/sharedUtils';
 import { FramesPerSecondInfo, MinTimeToCrossInfo, ConnectionDistanceInfo, ConnectionDistanceWarning } from '@/shared/sectionsConfig';
 
-const MIN_FRAMES_PER_SECOND = 0;
+const MIN_FRAMES_PER_SECOND = 1;
 const MAX_FRAMES_PER_SECOND = 60;
 const MIN_TIME_TO_CROSS = 1;
 const MAX_TIME_TO_CROSS = 200;
