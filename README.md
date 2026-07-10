@@ -7,7 +7,7 @@ npm install
 
 ### Compiles and hot-reloads for development
 ```
-npm run serve
+npm run dev
 ``` 
 
 ### Compiles and minifies for production
@@ -54,5 +54,3 @@ The following sources were referenced when creating this project.
 If any code is adapted from a source, the source will also be referenced in the relevent file.
 
 [Deploying Vue Apps to Github Pages](https://medium.com/swlh/deploy-vue-app-to-github-pages-2ada48d7397e)
-[Create an animated Vue 3 component when scrolling into view](https://michael-verschoof.medium.com/create-an-animated-vue-3-component-when-scrolling-into-view-f8e793e221c8)
-[Automatic Height When Embedding A Youtube Video](https://stackoverflow.com/questions/35814653/automatic-height-when-embedding-a-youtube-video)
